@@ -29,24 +29,25 @@ class Modelator(configuration: Configuration) {
                 docker.pull(tag)
             }
 
-            val existingContainers = docker.findLabeledContainers(key = dockerConfig.labelKey, value = dockerConfig.labelValue)
-
-            val containerId =
-                if (existingContainers.isEmpty()) {
-                    docker.createContainer(dockerConfig.toContainerConfig()).id()!!
-                } else {
-                    if (existingContainers.size > 1) {
-                        log.warn("More than one container with tag ${dockerConfig.labelKey}=$tag has been found. " +
-                            "Using the one which was most recently created")
-                    }
-                    existingContainers.sortedBy({ it.created() }).map({ it.id() }).first()
-                }
-
+//            val existingContainers = docker.findLabeledContainers(key = dockerConfig.labelKey, value = dockerConfig.labelValue)
+//
+//            val containerId =
+//                if (existingContainers.isEmpty()) {
+//                    docker.createContainer(dockerConfig.toContainerConfig()).id()!!
+//                } else {
+//                    if (existingContainers.size > 1) {
+//                        log.warn("More than one container with tag ${dockerConfig.labelKey}=$tag has been found. " +
+//                            "Using the one which was most recently created")
+//                    }
+//                    existingContainers.sortedBy({ it.created() }).map({ it.id() }).first()
+//                }
+            val containerId = docker.createContainer(dockerConfig.toContainerConfig()).id()!!
             docker.useContainer(containerId) {
                 waitForDatabase()
                 migrateDatabase()
                 runJooqGenerator()
             }
+            docker.removeContainer(containerId)
         }
     }
 
